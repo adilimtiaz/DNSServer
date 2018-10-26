@@ -1,16 +1,15 @@
 package ca.ubc.cs.cs317.dnslookup;
 
 import java.io.Console;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.net.*;
 import java.util.*;
 
 public class DNSLookupService {
 
     private static final int DEFAULT_DNS_PORT = 53;
     private static final int MAX_INDIRECTION_LEVEL = 10;
+    private static int id = 0;
 
     private static InetAddress rootServer;
     private static boolean verboseTracing = false;
@@ -175,10 +174,84 @@ public class DNSLookupService {
             return Collections.emptySet();
         }
 
+        try {
+            //generate the packet and send
+            DatagramSocket datagramSocket = new DatagramSocket();
+            byte[] sendBuf = new byte[256];
+            int bufferLength = generateQueryBuffer(sendBuf, node);
+            DatagramPacket dataGramPacket = new DatagramPacket(sendBuf, bufferLength, rootServer, DEFAULT_DNS_PORT);
+            datagramSocket.send(dataGramPacket);
+
+            //receive a packet
+            byte[] recBuf = new byte[256];
+
+        } catch(SocketException e) {
+            System.err.println("SocketException: " + e.getMessage());
+            return Collections.emptySet();
+        } catch(IOException e ){
+            System.err.println("IOException: " + e.getMessage());
+            return Collections.emptySet();
+        }
+
+
+
+
         // TODO To be completed by the student
 
         return cache.getCachedResults(node);
     }
+
+    private static int generateQueryBuffer(byte[] buf, DNSNode node) {
+        generateHeaderSection(buf);
+        return generateQuestionSection(buf, node, 12);
+    }
+
+    /**
+     *  Generates the Question section of the DNS query
+     */
+    private static void generateHeaderSection(byte[] buf){
+        int id = DNSLookupService.id % 65535;                       // Create a new id, 16bit so modulo 65535 to ensure no overflow
+        DNSLookupService.id++;
+        buf[0] = (byte) (id >> 8);                                 //assign ID to first two bytes
+        buf[1] = (byte) id;
+        buf[2] = (byte) 0;                                          //sets QR, OpCode, AA, and TC to 0
+        buf[3] = (byte) 0;                                          //sets RA, Z, Rcode to 0
+        buf[4] = (byte) 0;                                          //sets QDcount to 1 (we ask 1 question)
+        buf[5] = (byte) 1;
+        buf[6] = (byte) 0;                                          //sets ANcount to 0 (no answers in query)
+        buf[7] = (byte) 0;
+        buf[8] = (byte) 0;                                          //sets NSCount to 0 (no name server RR's)
+        buf[9] = (byte) 0;
+        buf[10] = (byte) 0;                                         //sets ARCount to 0 no RR's in additional section
+        buf[11] = (byte) 0;
+    }
+
+    //Generates the question section of the query, hands back the buffer offset (i.e the # of bytes of the entire query)
+    private static int generateQuestionSection(byte[] buf, DNSNode node, int currentOffset) {
+        String address = node.getHostName();
+        String[] splitAddress = address.split("\\.");                       //seperates address into subdomains ex: ["www","google","com"]
+        for(String addressPart : splitAddress){
+            int addresPartLength = addressPart.length();
+            buf[currentOffset] = (byte) (addresPartLength & (0xFF));             //inserts length of subdomain into buffer
+            currentOffset++;
+            for(int i = 0; i < addresPartLength; i++) {                          //this loop inserts individual character ASCII codes into buffer
+                char c = addressPart.charAt(i);
+                buf[currentOffset] = (byte) ((int) c & (0xFF));
+                currentOffset++;
+            }
+        }
+        buf[currentOffset] = (byte) 0;                                          //inserts 00 terminating code
+        currentOffset ++;                                                       //TODO i think that Qtype and Qclass should both be 1 according to an example .bin file
+        buf[currentOffset] = (byte) 0;                                           //inserts 1 as Qtype for host address
+        currentOffset ++;
+        buf[currentOffset] = (byte) 1;
+        currentOffset++;
+        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qclass for host address
+        currentOffset ++;
+        buf[currentOffset] = (byte) 1;
+        return currentOffset + 1;                                               //add 1 for 0 based index
+    }
+
 
     /**
      * Retrieves DNS results from a specified DNS server. Queries are sent in iterative mode,
