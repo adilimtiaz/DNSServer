@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
+import static java.lang.Math.abs;
+
 public class DNSLookupService {
 
     private static final int DEFAULT_DNS_PORT = 53;
     private static final int MAX_INDIRECTION_LEVEL = 10;
-    private static int id = 0;
 
     private static InetAddress rootServer;
     private static boolean verboseTracing = false;
@@ -176,15 +177,14 @@ public class DNSLookupService {
 
         try {
             //generate the packet and send
-            DatagramSocket datagramSocket = new DatagramSocket();
-            byte[] sendBuf = new byte[256];
-            int bufferLength = generateQueryBuffer(sendBuf, node);
-            DatagramPacket dataGramPacket = new DatagramPacket(sendBuf, bufferLength, rootServer, DEFAULT_DNS_PORT);
-            datagramSocket.send(dataGramPacket);
+            DNSQueryGenerator queryGenerator = new DNSQueryGenerator(node);
+            DatagramPacket datagramPacket = queryGenerator.createPacket(rootServer, DEFAULT_DNS_PORT);
+            socket.send(datagramPacket);
 
             //receive a packet
-            byte[] recBuf = new byte[256];
-
+            datagramPacket = new DatagramPacket(new byte[256], 256);
+            socket.receive(datagramPacket);
+            DNSResponseParser dnsResponseParser = new DNSResponseParser(datagramPacket, queryGenerator.getGeneratedId());
         } catch(SocketException e) {
             System.err.println("SocketException: " + e.getMessage());
             return Collections.emptySet();
@@ -192,66 +192,45 @@ public class DNSLookupService {
             System.err.println("IOException: " + e.getMessage());
             return Collections.emptySet();
         }
-
-
-
-
         // TODO To be completed by the student
 
         return cache.getCachedResults(node);
     }
 
-    private static int generateQueryBuffer(byte[] buf, DNSNode node) {
-        generateHeaderSection(buf);
-        return generateQuestionSection(buf, node, 12);
+    private static void parseDNSResponse(DatagramPacket datagramPacket){
+        byte[] data = datagramPacket.getData();
+
+        int id =  convertToUnsignedInt(data[0], data[1]);
+        System.out.println(id);
+
+        int QR = abs((int) data[2] >> 7);                   //should be 1
+        //TODO don't know if we need to parse any of these small fields
+
+        int QDCOUNT = convertToUnsignedInt(data[4], data[5]);
+        int ANCOUNT = convertToUnsignedInt(data[6], data[7]);
+        int NSCOUNT = convertToUnsignedInt(data[8], data[9]);
+        int ARCOUNT = convertToUnsignedInt(data[10], data[11]);
+        System.out.println("check");
     }
 
-    /**
-     *  Generates the Question section of the DNS query
-     */
-    private static void generateHeaderSection(byte[] buf){
-        int id = DNSLookupService.id % 65535;                       // Create a new id, 16bit so modulo 65535 to ensure no overflow
-        DNSLookupService.id++;
-        buf[0] = (byte) (id >> 8);                                 //assign ID to first two bytes
-        buf[1] = (byte) id;
-        buf[2] = (byte) 0;                                          //sets QR, OpCode, AA, and TC to 0
-        buf[3] = (byte) 0;                                          //sets RA, Z, Rcode to 0
-        buf[4] = (byte) 0;                                          //sets QDcount to 1 (we ask 1 question)
-        buf[5] = (byte) 1;
-        buf[6] = (byte) 0;                                          //sets ANcount to 0 (no answers in query)
-        buf[7] = (byte) 0;
-        buf[8] = (byte) 0;                                          //sets NSCount to 0 (no name server RR's)
-        buf[9] = (byte) 0;
-        buf[10] = (byte) 0;                                         //sets ARCount to 0 no RR's in additional section
-        buf[11] = (byte) 0;
-    }
-
-    //Generates the question section of the query, hands back the buffer offset (i.e the # of bytes of the entire query)
-    private static int generateQuestionSection(byte[] buf, DNSNode node, int currentOffset) {
-        String address = node.getHostName();
-        String[] splitAddress = address.split("\\.");                       //seperates address into subdomains ex: ["www","google","com"]
-        for(String addressPart : splitAddress){
-            int addresPartLength = addressPart.length();
-            buf[currentOffset] = (byte) (addresPartLength & (0xFF));             //inserts length of subdomain into buffer
-            currentOffset++;
-            for(int i = 0; i < addresPartLength; i++) {                          //this loop inserts individual character ASCII codes into buffer
-                char c = addressPart.charAt(i);
-                buf[currentOffset] = (byte) ((int) c & (0xFF));
-                currentOffset++;
-            }
+    private static int convertToUnsignedInt(byte byt) {
+        //TODO I don't know if this will be used but it requires additonal testing to make sure it works right
+        if((int) (byt >> 7) == -1){
+            return (int) (byt & 0x7) + 8;
+        } else {
+            return (int) byt;
         }
-        buf[currentOffset] = (byte) 0;                                          //inserts 00 terminating code
-        currentOffset ++;                                                       //TODO i think that Qtype and Qclass should both be 1 according to an example .bin file
-        buf[currentOffset] = (byte) 0;                                           //inserts 1 as Qtype for host address
-        currentOffset ++;
-        buf[currentOffset] = (byte) 1;
-        currentOffset++;
-        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qclass for host address
-        currentOffset ++;
-        buf[currentOffset] = (byte) 1;
-        return currentOffset + 1;                                               //add 1 for 0 based index
     }
 
+    private static int convertToUnsignedInt(byte byte1, byte byte2){
+        if( (byte1 >> 7) == -1){
+            return ((int) ((byte1 & 0x7F) << 8) | byte2) + 32768;
+        } else {
+            int shiftedBits = byte1 << 8;
+            int ord = byte1 | byte2;
+            return ord;
+        }
+    }
 
     /**
      * Retrieves DNS results from a specified DNS server. Queries are sent in iterative mode,
