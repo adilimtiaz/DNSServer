@@ -74,7 +74,7 @@ public class DNSResponseParser {
         String name = parseLabelSequence();
         RecordType type = RecordType.getByCode(convertToUnsignedInt(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]));
         this.currentDataIndex += 2;
-        int clas = convertToUnsignedInt(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]);
+        int recordClass = convertToUnsignedInt(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]);
         this.currentDataIndex += 2;
         long ttl = convertTo32BitLong();
         this.currentDataIndex += 4;
@@ -82,26 +82,26 @@ public class DNSResponseParser {
         this.currentDataIndex += 2;
         if(type == RecordType.NS) {
             String rData = parseLabelSequence();
-            ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, rData);
-            cache.addResult(resourceRecord);
+//            ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, rData);
+//            cache.addResult(resourceRecord);
         } else if(type == RecordType.A){
             try {
                 InetAddress addr = parseIPV4address();
-                ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, addr);
+                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode, ttl, name, addr);
                 cache.addResult(resourceRecord);
             } catch (UnknownHostException e){
                 System.err.println("Problem parsing IPV4address: " + e.getMessage());
             }
-        } else {
+        } else if(type == RecordType.AAAA){
             try {
                 InetAddress addr = parseIPV6address();
-                ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, addr);
+                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode, ttl, name, addr);
                 cache.addResult(resourceRecord);
             } catch (UnknownHostException e){
-                System.err.println("Problem parsing IPV4address: " + e.getMessage());
+                System.err.println("Problem parsing IPV6address: " + e.getMessage());
             }
         }
-        //TODO add case for parsing CNAME type
+        //TODO add case parsing of answer CNAME's (maybe more)
     }
 
     private InetAddress parseIPV4address() throws UnknownHostException{
@@ -148,6 +148,7 @@ public class DNSResponseParser {
             int isPointer = isPointer(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]);
             if(isPointer > 0){
                 labels.add(this.compressionMap.get(isPointer));
+                labelStartIndexes.add(isPointer);
                 this.currentDataIndex++;
                 break;
             } else {
@@ -176,7 +177,6 @@ public class DNSResponseParser {
     }
 
     private static int convertToUnsignedInt(byte byt) {
-        //TODO I don't know if this will be used but it requires additonal testing to make sure it works right
         if((byt >> 7) == -1){
             return ((byt & 0x7)) + 8;
         } else {

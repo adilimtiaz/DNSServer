@@ -185,7 +185,7 @@ public class DNSLookupService {
             datagramPacket = new DatagramPacket(new byte[1024], 1024);
             socket.receive(datagramPacket);
             DNSResponseParser dnsResponseParser = new DNSResponseParser(datagramPacket, queryGenerator.getGeneratedId(), node);
-            System.out.println("check");
+            System.out.println("check");        //put this here just as a convenient breakpoint to check fields of dnsResponseParser
         } catch(SocketException e) {
             System.err.println("SocketException: " + e.getMessage());
             return Collections.emptySet();
