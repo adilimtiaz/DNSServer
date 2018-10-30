@@ -182,9 +182,10 @@ public class DNSLookupService {
             socket.send(datagramPacket);
 
             //receive a packet
-            datagramPacket = new DatagramPacket(new byte[256], 256);
+            datagramPacket = new DatagramPacket(new byte[1024], 1024);
             socket.receive(datagramPacket);
-            DNSResponseParser dnsResponseParser = new DNSResponseParser(datagramPacket, queryGenerator.getGeneratedId());
+            DNSResponseParser dnsResponseParser = new DNSResponseParser(datagramPacket, queryGenerator.getGeneratedId(), node);
+            System.out.println("check");
         } catch(SocketException e) {
             System.err.println("SocketException: " + e.getMessage());
             return Collections.emptySet();
@@ -195,41 +196,6 @@ public class DNSLookupService {
         // TODO To be completed by the student
 
         return cache.getCachedResults(node);
-    }
-
-    private static void parseDNSResponse(DatagramPacket datagramPacket){
-        byte[] data = datagramPacket.getData();
-
-        int id =  convertToUnsignedInt(data[0], data[1]);
-        System.out.println(id);
-
-        int QR = abs((int) data[2] >> 7);                   //should be 1
-        //TODO don't know if we need to parse any of these small fields
-
-        int QDCOUNT = convertToUnsignedInt(data[4], data[5]);
-        int ANCOUNT = convertToUnsignedInt(data[6], data[7]);
-        int NSCOUNT = convertToUnsignedInt(data[8], data[9]);
-        int ARCOUNT = convertToUnsignedInt(data[10], data[11]);
-        System.out.println("check");
-    }
-
-    private static int convertToUnsignedInt(byte byt) {
-        //TODO I don't know if this will be used but it requires additonal testing to make sure it works right
-        if((int) (byt >> 7) == -1){
-            return (int) (byt & 0x7) + 8;
-        } else {
-            return (int) byt;
-        }
-    }
-
-    private static int convertToUnsignedInt(byte byte1, byte byte2){
-        if( (byte1 >> 7) == -1){
-            return ((int) ((byte1 & 0x7F) << 8) | byte2) + 32768;
-        } else {
-            int shiftedBits = byte1 << 8;
-            int ord = byte1 | byte2;
-            return ord;
-        }
     }
 
     /**
