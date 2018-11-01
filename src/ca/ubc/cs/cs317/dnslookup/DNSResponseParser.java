@@ -82,12 +82,12 @@ public class DNSResponseParser {
         this.currentDataIndex += 2;
         if(type == RecordType.NS) {
             String rData = parseLabelSequence();
-//            ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, rData);
-//            cache.addResult(resourceRecord);
+            ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, rData);
+            cache.addResult(resourceRecord);
         } else if(type == RecordType.A){
             try {
                 InetAddress addr = parseIPV4address();
-                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode, ttl, name, addr);
+                ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, addr);
                 cache.addResult(resourceRecord);
             } catch (UnknownHostException e){
                 System.err.println("Problem parsing IPV4address: " + e.getMessage());
@@ -95,7 +95,7 @@ public class DNSResponseParser {
         } else if(type == RecordType.AAAA){
             try {
                 InetAddress addr = parseIPV6address();
-                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode, ttl, name, addr);
+                ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, addr);
                 cache.addResult(resourceRecord);
             } catch (UnknownHostException e){
                 System.err.println("Problem parsing IPV6address: " + e.getMessage());

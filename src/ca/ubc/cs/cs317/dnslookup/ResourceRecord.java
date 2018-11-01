@@ -23,13 +23,6 @@ public class ResourceRecord implements Serializable {
         this.inetResult = null;
     }
 
-    public ResourceRecord(DNSNode node, long ttl, String textResult, InetAddress inetResult) {
-        this.node = node;
-        this.expirationTime = new Date(System.currentTimeMillis() + (ttl * 1000));
-        this.textResult = textResult;
-        this.inetResult = inetResult;
-    }
-
     public ResourceRecord(String hostName, RecordType type, long ttl, InetAddress result) {
         this(hostName, type, ttl, result.getHostAddress());
         this.inetResult = result;
