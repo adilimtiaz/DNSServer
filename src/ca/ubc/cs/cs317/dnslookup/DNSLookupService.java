@@ -174,6 +174,10 @@ public class DNSLookupService {
         }
 
         try {
+            if(cache.getCachedResults(node).size() > 0){ // Return from cache first if theres anything in the cache
+                return cache.getCachedResults(node);
+            }
+
             while(true) { // TODO: Replace with while response is not authoritative
                 //generate the packet and send
                 int generatedId = abs(random.nextInt()) % 65535; // We want this to be the same if query is resent

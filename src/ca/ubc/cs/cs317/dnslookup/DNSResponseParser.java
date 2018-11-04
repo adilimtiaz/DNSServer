@@ -129,8 +129,16 @@ public class DNSResponseParser {
             } catch (UnknownHostException e){
                 System.err.println("Problem parsing IPV4address: " + e.getMessage());
             }
+        } else if(type == RecordType.AAAA){
+            try {
+                InetAddress addr = parseIPV6address();
+                ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, addr);
+                cache.addResult(resourceRecord);
+            } catch (UnknownHostException e){
+                System.err.println("Problem parsing IPV6address: " + e.getMessage());
+            }
         }
-        else if (type == RecordType.NS) {
+        else if (type == RecordType.NS || type == RecordType.CNAME) {
             String nameServerName = parseDomainName(this.currentDataIndex);
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, nameServerName);
             cache.addResult(resourceRecord);
