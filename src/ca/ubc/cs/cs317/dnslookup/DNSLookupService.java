@@ -152,7 +152,6 @@ public class DNSLookupService {
      * @param type     Record type for search.
      */
     private static void findAndPrintResults(String hostName, RecordType type) {
-
         DNSNode node = new DNSNode(hostName, type);
         printResults(node, getResults(node, 0));
     }
@@ -169,28 +168,41 @@ public class DNSLookupService {
      * @return A set of resource records corresponding to the specific query requested.
      */
     private static Set<ResourceRecord> getResults(DNSNode node, int indirectionLevel) {
-
         if (indirectionLevel > MAX_INDIRECTION_LEVEL) {
             System.err.println("Maximum number of indirection levels reached.");
             return Collections.emptySet();
         }
 
         try {
-            //generate the packet and send
-            DNSQueryGenerator queryGenerator = new DNSQueryGenerator(node);
-            DatagramPacket datagramPacket = queryGenerator.createPacket(rootServer, DEFAULT_DNS_PORT);
-            socket.send(datagramPacket);
-
-            //receive a packet
-            datagramPacket = new DatagramPacket(new byte[1024], 1024);
-            socket.receive(datagramPacket);
-            DNSResponseParser dnsResponseParser = new DNSResponseParser(datagramPacket, queryGenerator.getGeneratedId(), node);
-            System.out.println("check");        //put this here just as a convenient breakpoint to check fields of dnsResponseParser
+            while(true) { // TODO: Replace with while response is not authoritative
+                //generate the packet and send
+                int generatedId = abs(random.nextInt()) % 65535; // We want this to be the same if query is resent
+                DNSQueryGenerator queryGenerator = new DNSQueryGenerator(node, verboseTracing);
+                DNSResponseParser dnsResponseParser;
+                while(true){
+                    DatagramPacket query = queryGenerator.createPacket(rootServer, DEFAULT_DNS_PORT, generatedId);
+                    socket.send(query);
+                    //receive a packet
+                    DatagramPacket response = new DatagramPacket(new byte[1024], 1024);
+                    socket.receive(response);
+                    dnsResponseParser = new DNSResponseParser(response, node, verboseTracing);
+                    if(dnsResponseParser.checkValidTransactionID(queryGenerator.getGeneratedId())){
+                        break; // its a valid response so we know we got the right packet
+                    }
+                }
+                dnsResponseParser.parse();
+                break;
+            }
+        } catch(SocketTimeoutException e){
+            System.err.println("Socket timed out on query for hostname: " + node.getHostName() + " and type: " + node.getType());
         } catch(SocketException e) {
             System.err.println("SocketException: " + e.getMessage());
             return Collections.emptySet();
         } catch(IOException e ){
             System.err.println("IOException: " + e.getMessage());
+            return Collections.emptySet();
+        } catch(Exception e){
+            System.err.println(e.getMessage());
             return Collections.emptySet();
         }
         // TODO To be completed by the student

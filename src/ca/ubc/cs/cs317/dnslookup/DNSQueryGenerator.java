@@ -12,25 +12,34 @@ public class DNSQueryGenerator {
     private byte[] buffer;
     private DNSNode node;
     private int generatedId;
+    private boolean isVerbose;
 
 
-    public DNSQueryGenerator(DNSNode node) {
+    public DNSQueryGenerator(DNSNode node, boolean isVerbose) {
         this.buffer = new byte[256];
         this.node = node;
+        this.isVerbose = isVerbose;
     }
 
-    public DatagramPacket createPacket(InetAddress rootServer, int port) {
+    public DatagramPacket createPacket(InetAddress rootServer, int port, int generatedId) {
+        this.generatedId = generatedId;
         generateHeaderSection(this.buffer);
         generateQuestionSection(this.buffer, this.node);
+        if(this.isVerbose){
+            System.out.print("\n\n"); // for each query that is sent, print 2 blank lines
+            System.out.println("Query ID     " + this.generatedId
+            +  " " + this.node.getHostName()
+            +  "  " + this.node.getType()
+            + " --> " + rootServer.getHostAddress());
+        }
         return new DatagramPacket(this.buffer, this.bufferLength, rootServer, port);
     }
 
 
     private void generateHeaderSection(byte[] buf){
-        this.generatedId = abs(random.nextInt()) % 65535;                       // Create a new id, 16bit so modulo 65535 to ensure no overflow
         buf[0] = (byte) (this.generatedId >>> 8);                                 //assign ID to first two bytes
         buf[1] = (byte) (this.generatedId & (0xFF));
-        buf[2] = (byte) 0;                                          //sets QR, OpCode, AA, and TC to 0
+        buf[2] = (byte) 0;                                          //sets QR to 0 cause query, OpCode 0 for standard query, AA, RD and TC to 0
         buf[3] = (byte) 0;                                          //sets RA, Z, Rcode to 0
         buf[4] = (byte) 0;                                          //sets QDcount to 1 (we ask 1 question)
         buf[5] = (byte) 1;
