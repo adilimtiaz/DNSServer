@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="36173450-3937-46bd-a190-82182fcfb8df" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSLookupService.class" afterPath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSLookupService.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.class" afterPath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.class" afterPath="$PROJECT_DIR$/production/a2_a8l0b_s9a0b1/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.class" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.java" afterPath="$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.java" afterPath="$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.java" />
@@ -36,13 +33,13 @@
       <file leaf-file-name="DNSResponseParser.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="283">
-              <caret line="149" column="69" lean-forward="false" selection-start-line="149" selection-start-column="69" selection-end-line="149" selection-end-column="69" />
+            <state relative-caret-position="136">
+              <caret line="147" column="132" lean-forward="false" selection-start-line="147" selection-start-column="132" selection-end-line="147" selection-end-column="132" />
               <folding>
-                <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-                <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-                <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-                <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+                <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+                <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+                <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+                <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
               </folding>
             </state>
           </provider>
@@ -51,8 +48,8 @@
       <file leaf-file-name="DNSQueryGenerator.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="223">
-              <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+            <state relative-caret-position="-278">
+              <caret line="72" column="80" lean-forward="false" selection-start-line="72" selection-start-column="80" selection-end-line="72" selection-end-column="80" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -346,12 +343,12 @@
       <workItem from="1540929377622" duration="1981000" />
       <workItem from="1541017996326" duration="7246000" />
       <workItem from="1541056346707" duration="1153000" />
-      <workItem from="1541363520338" duration="8214000" />
+      <workItem from="1541363520338" duration="8856000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="84647000" />
+    <option name="totallyTimeSpent" value="85289000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -364,6 +361,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-9" y="-9" width="1938" height="1048" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32915717" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -373,7 +371,7 @@
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.39635536" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39635536" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32915717" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32801822" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
@@ -385,7 +383,7 @@
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Theme Preview" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4407745" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4407745" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -474,10 +472,10 @@
         <state relative-caret-position="2016">
           <caret line="96" column="4" lean-forward="false" selection-start-line="96" selection-start-column="4" selection-end-line="96" selection-end-column="4" />
           <folding>
-            <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-            <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
           </folding>
         </state>
       </provider>
@@ -537,10 +535,10 @@
         <state relative-caret-position="2436">
           <caret line="116" column="70" lean-forward="false" selection-start-line="116" selection-start-column="70" selection-end-line="116" selection-end-column="70" />
           <folding>
-            <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-            <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
           </folding>
         </state>
       </provider>
@@ -607,10 +605,10 @@
         <state relative-caret-position="798">
           <caret line="38" column="4" lean-forward="false" selection-start-line="38" selection-start-column="4" selection-end-line="38" selection-end-column="4" />
           <folding>
-            <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-            <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
           </folding>
         </state>
       </provider>
@@ -628,10 +626,10 @@
         <state relative-caret-position="756">
           <caret line="36" column="0" lean-forward="false" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
           <folding>
-            <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-            <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
           </folding>
         </state>
       </provider>
@@ -831,8 +829,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSQueryGenerator.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="223">
-          <caret line="69" column="0" lean-forward="false" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+        <state relative-caret-position="-278">
+          <caret line="72" column="80" lean-forward="false" selection-start-line="72" selection-start-column="80" selection-end-line="72" selection-end-column="80" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
@@ -849,13 +847,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/ca/ubc/cs/cs317/dnslookup/DNSResponseParser.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="283">
-          <caret line="149" column="69" lean-forward="false" selection-start-line="149" selection-start-column="69" selection-end-line="149" selection-end-column="69" />
+        <state relative-caret-position="136">
+          <caret line="147" column="132" lean-forward="false" selection-start-line="147" selection-start-column="132" selection-end-line="147" selection-end-column="132" />
           <folding>
-            <marker date="1541371881016" expanded="false" signature="9485:9496" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9516:9522" ph=" }" />
-            <marker date="1541371881016" expanded="false" signature="9782:9792" ph=" { " />
-            <marker date="1541371881016" expanded="false" signature="9825:9831" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9618:9629" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9649:9655" ph=" }" />
+            <marker date="1541372883528" expanded="false" signature="9915:9925" ph=" { " />
+            <marker date="1541372883528" expanded="false" signature="9958:9964" ph=" }" />
           </folding>
         </state>
       </provider>

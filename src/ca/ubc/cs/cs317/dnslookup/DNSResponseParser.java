@@ -145,6 +145,7 @@ public class DNSResponseParser {
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         } else {  //case for finding a record we are not expected to get any data out of
+            //TODO should test a case where we need to parse normal records plus an unexpected to ensure that this offset is correct
             this.currentDataIndex += rDataLength; //skip over all the data contents
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, "----");
             verbosePrintResourceRecord(resourceRecord, type.getCode());

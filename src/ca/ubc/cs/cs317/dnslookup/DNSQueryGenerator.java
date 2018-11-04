@@ -68,14 +68,9 @@ public class DNSQueryGenerator {
         buf[currentOffset] = (byte) 0;                                          //inserts 00 terminating code
         currentOffset ++;
         currentOffset = insertQType(buf, currentOffset);
-////        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qtype for host address
-////        currentOffset ++;
-//        buf[currentOffset] = (byte) 1;
-//        currentOffset++;
-//        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qclass for IN
         currentOffset ++;
-        buf[currentOffset] = (byte) 1;
-        this.bufferLength = currentOffset + 1;                                               //add 1 for 0 based index
+        buf[currentOffset] = (byte) 1;                                          //inserts 1 as Qclass for IN
+        this.bufferLength = currentOffset + 1;                                  //add 1 for 0 based index
     }
 
     private int insertQType(byte[] buf, int currentOffset) {
