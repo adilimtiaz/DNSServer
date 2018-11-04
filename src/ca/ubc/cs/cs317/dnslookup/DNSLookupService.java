@@ -195,6 +195,31 @@ public class DNSLookupService {
                     }
                 }
                 dnsResponseParser.parse();
+                if(dnsResponseParser.getIsAuthoritativeAnswer() &&
+                        cache.getCachedResults(node).size()> 0)  //If answer is authoritative and node is contained in cache, we have found the answer
+                {
+                    break;
+                }
+                else if(dnsResponseParser.getNSCOUNT()> 0){ // No answer but we got name servers
+                    // Check if we know the ipaddress in cache for nameservers
+                    InetAddress targetIPAddress;
+                    for(int i=0; i<dnsResponseParser.nameServerDomainNames.size(); i++){
+                        String bufferDomainName = dnsResponseParser.nameServerDomainNames.get(i);
+                        DNSNode nsNode = new DNSNode(bufferDomainName, RecordType.A);
+                        ArrayList<ResourceRecord> cacheResults = new ArrayList<>();
+                        cacheResults.addAll(cache.getCachedResults(nsNode));
+                        if(cacheResults.size()>0){ // IP Address of NS is known
+                            targetIPAddress = cacheResults.get(0).getInetResult();
+                            InetAddress originalRootServer = rootServer;
+                            rootServer = targetIPAddress;
+                            getResults(node, ++indirectionLevel);
+                            rootServer = originalRootServer;
+                            break; // No need to check the other NS, we know the IP address for one already
+                        }
+                    }
+
+
+                }
                 break;
             }
         } catch(SocketTimeoutException e){

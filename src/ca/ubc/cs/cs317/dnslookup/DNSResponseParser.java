@@ -22,12 +22,14 @@ public class DNSResponseParser {
     private DNSNode dnsNode;
     private boolean isAuthoritativeAnswer;
     private boolean isVerbose;
+    public ArrayList<String> nameServerDomainNames;
 
 
     public DNSResponseParser(DatagramPacket packet, DNSNode node, boolean isVerbose) {
         this.data = packet.getData();
         this.dnsNode = node;
         this.isVerbose = isVerbose;
+        nameServerDomainNames = new ArrayList<>();
     }
 
     public void parse() throws Exception{
@@ -140,6 +142,7 @@ public class DNSResponseParser {
         }
         else if (type == RecordType.NS || type == RecordType.CNAME) {
             String nameServerName = parseDomainName(this.currentDataIndex);
+            nameServerDomainNames.add(nameServerName);
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, nameServerName);
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
@@ -235,5 +238,17 @@ public class DNSResponseParser {
                     record.getTTL(),
                     record.getType() == RecordType.OTHER ? rtype : record.getType(),
                     record.getTextResult());
+    }
+
+    public boolean getIsAuthoritativeAnswer(){
+        return this.isAuthoritativeAnswer;
+    }
+
+    public int getNSCOUNT(){
+        return this.NSCOUNT;
+    }
+
+    public ArrayList<String> getResponseNameServerDomainNames(){
+        return this.nameServerDomainNames;
     }
 }
