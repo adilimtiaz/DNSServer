@@ -134,6 +134,7 @@ public class DNSResponseParser {
                 InetAddress addr = parseIPV6address();
                 ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, addr);
                 cache.addResult(resourceRecord);
+                verbosePrintResourceRecord(resourceRecord, type.getCode());
             } catch (UnknownHostException e){
                 System.err.println("Problem parsing IPV6address: " + e.getMessage());
             }
@@ -142,6 +143,10 @@ public class DNSResponseParser {
             String nameServerName = parseDomainName(this.currentDataIndex);
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, nameServerName);
             cache.addResult(resourceRecord);
+            verbosePrintResourceRecord(resourceRecord, type.getCode());
+        } else {  //case for finding a record we are not expected to get any data out of
+            this.currentDataIndex += rDataLength; //skip over all the data contents
+            ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, "----");
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         }
 

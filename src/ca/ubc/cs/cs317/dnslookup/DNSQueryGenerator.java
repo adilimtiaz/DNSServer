@@ -67,14 +67,52 @@ public class DNSQueryGenerator {
         }
         buf[currentOffset] = (byte) 0;                                          //inserts 00 terminating code
         currentOffset ++;
-        buf[currentOffset] = (byte) 0;                                           //inserts 1 as Qtype for host address
-        currentOffset ++;
-        buf[currentOffset] = (byte) 1;
-        currentOffset++;
-        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qclass for host address
+        currentOffset = insertQType(buf, currentOffset);
+////        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qtype for host address
+////        currentOffset ++;
+//        buf[currentOffset] = (byte) 1;
+//        currentOffset++;
+//        buf[currentOffset] = (byte) 0;                                          //inserts 1 as Qclass for IN
         currentOffset ++;
         buf[currentOffset] = (byte) 1;
         this.bufferLength = currentOffset + 1;                                               //add 1 for 0 based index
+    }
+
+    private int insertQType(byte[] buf, int currentOffset) {
+        int code = this.node.getType().getCode();
+        switch (this.node.getType()){
+            case A:
+                buf[currentOffset] = 0;
+                currentOffset++;
+                buf[currentOffset] = 0x01;
+                currentOffset++;
+                break;
+            case AAAA:              //code = 28
+                buf[currentOffset] = 0;
+                currentOffset++;
+                buf[currentOffset] = 0x1C;
+                currentOffset++;
+                break;
+            case NS:
+                buf[currentOffset] = 0;
+                currentOffset++;
+                buf[currentOffset] = 0x02;
+                currentOffset++;
+                break;
+            case MX:                //code = 15
+                buf[currentOffset] = 0;
+                currentOffset++;
+                buf[currentOffset] = 0x0F;
+                currentOffset++;
+                break;
+            case CNAME:
+                buf[currentOffset] = 0;
+                currentOffset++;
+                buf[currentOffset] = 0x05;
+                currentOffset++;
+                break;
+        }
+        return currentOffset;
     }
 
     public int getGeneratedId() {
