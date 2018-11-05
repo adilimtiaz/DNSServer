@@ -46,6 +46,7 @@ public class DNSResponseParser {
         for(int i=5; i<8;i++){
             RCODE = ((RCODE << 1) | getNthBitFromLeftForByte(i, this.data[3]));
         }
+        processRcode(RCODE);
         this.QDCOUNT = convertToUnsignedInt(this.data[4], this.data[5]);
         this.ANCOUNT = convertToUnsignedInt(this.data[6], this.data[7]);
         this.NSCOUNT = convertToUnsignedInt(this.data[8], this.data[9]);
@@ -55,6 +56,27 @@ public class DNSResponseParser {
             + " Authoritative = " + this.isAuthoritativeAnswer);
         }
         this.currentDataIndex = 12;
+    }
+
+    private void processRcode(int rCode) throws Exception {
+        switch(rCode){
+            case(0):
+                break;
+            case(1):
+                throw new Exception("Format error - The name server was unable to interpret the query.");
+            case(2):
+                throw new Exception("Server failure - The name server was unable to " +
+                        "process this query due to a problem with the name server.");
+            case(3):
+                throw new Exception("Name Error - The domain name referenced in the query does not exist");
+            case(4):
+                throw new Exception(" Not Implemented - The name server does\n" +
+                        "                                not support the requested kind of query");
+            case(5):
+                throw new Exception("Refused - The name server refuses to\n" +
+                        "                                perform the specified operation for\n" +
+                        "                                policy reasons.");
+        }
     }
 
     // If false, then this is not the response for query
