@@ -108,22 +108,6 @@ public class DNSResponseParser {
         this.currentDataIndex += 4;
         int rDataLength = convertToUnsignedInt(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]);
         this.currentDataIndex += 2;
-        /**
-        if(type == RecordType.NS) {
-//            String rData = parseDomainName();
-//          ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, rData);
-//          cache.addResult(resourceRecord);
-        } else  else if(type == RecordType.AAAA){
-            try {
-                InetAddress addr = parseIPV6address();
-                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode.getHostName(), type, ttl, addr);
-                cache.addResult(resourceRecord);
-            } catch (UnknownHostException e){
-                System.err.println("Problem parsing IPV6address: " + e.getMessage());
-            }
-        }
-        //TODO add case parsing of answer CNAME and NS
-         **/
         if(type == RecordType.A) {
             try {
                 InetAddress addr = parseIPV4address();
@@ -169,7 +153,6 @@ public class DNSResponseParser {
     }
 
     private InetAddress parseIPV6address() throws UnknownHostException{
-        //TODO this method does not work, need a new way to parse IPV6
         byte[] ipv6Bytes = new byte[16];
         for(int i = 0; i < 16; i++){
             ipv6Bytes[i] = (byte)(this.data[this.currentDataIndex] & 0xFF);

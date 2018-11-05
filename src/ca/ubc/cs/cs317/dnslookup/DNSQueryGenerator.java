@@ -5,8 +5,6 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Random;
 
-import static java.lang.Math.abs;
-
 public class DNSQueryGenerator {
     private static Random random = new Random();
     private int bufferLength;
