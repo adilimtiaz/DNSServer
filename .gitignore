@@ -1,0 +1,4 @@
+production/*
+.idea/misc.xml
+.idea/vcs.xml
+/*.class

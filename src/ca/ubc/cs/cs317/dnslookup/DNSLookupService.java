@@ -179,82 +179,132 @@ public class DNSLookupService {
         }
 
         try {
-            if(cache.getCachedResults(node).size() > 0){ // Return from cache first if theres anything in the cache
+            if (cache.getCachedResults(node).size() > 0) { // Return from cache first if theres anything in the cache
                 return cache.getCachedResults(node);
             }
-            if(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0) { //Cname for this server already cached
+
+            /**
+            // Check if CName for this server already cached
+            if (cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0) {
                 ResourceRecord cnameRecord = new ArrayList<>(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME))).get(0);
                 mostRecentCname = cnameRecord.getTextResult();
                 DNSNode newNode = new DNSNode(mostRecentCname, node.getType());
                 rootServer = topLevelRootServer;
                 return getResults(newNode, ++indirectionLevel);
             }
+             **/
 
-            while(true) { // TODO: Replace with while response is not authoritative
-                //generate the packet and send
+          outerloop:
+            while (true) { // TODO: Replace with while response is not authoritative
+                // send and receive query
                 int generatedId = abs(random.nextInt()) % 65535; // We want this to be the same if query is resent
-                DNSQueryGenerator queryGenerator = new DNSQueryGenerator(node, verboseTracing);
-                DNSResponseParser dnsResponseParser;
-                while(true){
-                    DatagramPacket query = queryGenerator.createPacket(rootServer, DEFAULT_DNS_PORT, generatedId);
-                    socket.send(query);
-                    //receive a packet
-                    DatagramPacket response = new DatagramPacket(new byte[1024], 1024);
-                    socket.receive(response);
-                    dnsResponseParser = new DNSResponseParser(response, node, verboseTracing);
-                    if(dnsResponseParser.checkValidTransactionID(queryGenerator.getGeneratedId())){
-                        break; // its a valid response so we know we got the right packet
-                    }
+                DNSResponseParser dnsResponseParser = sendAndReceiveQuery(node, rootServer, generatedId);
+
+                if(dnsResponseParser == null) {
+                    return Collections.emptySet(); // Socket timed out twice
                 }
-                dnsResponseParser.parse();
-                if(dnsResponseParser.getIsAuthoritativeAnswer() &&
-                        cache.getCachedResults(node).size()> 0)  //If answer is authoritative and node is contained in cache, we have found the answer
+
+                dnsResponseParser.parse(); // Parse the response to update cache
+
+                if (dnsResponseParser.getIsAuthoritativeAnswer() &&
+                        cache.getCachedResults(node).size() > 0)  // If answer is authoritative and node is contained in cache, we have found the answer
                 {
                     break;
                 }
-                else if(dnsResponseParser.getIsAuthoritativeAnswer() &&     //Check if we got some Cnamames
-                        cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0){
+                /**
+                else if (dnsResponseParser.getIsAuthoritativeAnswer() &&     // If the answer is authoritative and we have CNames
+                        cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0)
+                {
                     ArrayList<ResourceRecord> cnameResults = new ArrayList<>(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)));
-                    mostRecentCname= cnameResults.get(0).getTextResult();
+                    mostRecentCname = cnameResults.get(0).getTextResult();
                     DNSNode newNode = new DNSNode(mostRecentCname, node.getType());
                     rootServer = topLevelRootServer;
                     return getResults(newNode, ++indirectionLevel);
                 }
-                else if(dnsResponseParser.getNSCOUNT()> 0){ // No answer but we got name servers
-                    // Check if we know the ipaddress in cache for nameservers
-                    InetAddress targetIPAddress;
-                    for(int i=0; i<dnsResponseParser.nameServerDomainNames.size(); i++){
+                 **/
+                else if (dnsResponseParser.getNSCOUNT() > 0) { // No auth answer returned by query but we got name servers
+                    InetAddress targetNSIPAddress;
+                    for (int i = 0; i < dnsResponseParser.nameServerDomainNames.size(); i++) {
                         String bufferDomainName = dnsResponseParser.nameServerDomainNames.get(i);
+
                         DNSNode nsNode = new DNSNode(bufferDomainName, RecordType.A);
                         ArrayList<ResourceRecord> cacheResults = new ArrayList<>();
                         cacheResults.addAll(cache.getCachedResults(nsNode));
-                        if(cacheResults.size()>0){ // IP Address of NS is known
-                            targetIPAddress = cacheResults.get(0).getInetResult();
+
+                        // Check if cache has IPV4 Address for bufferDomainName NS
+                        if (cacheResults.size() > 0) { // IP Address of NS is known
+                            targetNSIPAddress = cacheResults.get(0).getInetResult();
                             InetAddress originalRootServer = rootServer;
-                            rootServer = targetIPAddress;
+
+                            // Change rootServer so query can be made with nameServer IPV4 Addr
+                            rootServer = targetNSIPAddress;
                             getResults(node, indirectionLevel);
-                            rootServer = originalRootServer;
-                            break; // No need to check the other NS, we know the IP address for one already
+                            rootServer = originalRootServer; // Restore original rootServer
+
+                            break outerloop; // No need to check the other NS, the recursive call will find the correct answer or give an empty set
                         }
                     }
                 }
-                break;
             }
-        } catch(SocketTimeoutException e){
-            System.err.println("Socket timed out on query for hostname: " + node.getHostName() + " and type: " + node.getType());
-        } catch(SocketException e) {
+        } catch (SocketException e) {
             System.err.println("SocketException: " + e.getMessage());
             return Collections.emptySet();
-        } catch(IOException e ){
+        } catch (IOException e) {
             System.err.println("IOException: " + e.getMessage());
             return Collections.emptySet();
-        } catch(Exception e){
+        } catch (Exception e) {
             System.err.println(e.getMessage());
             return Collections.emptySet();
         }
-        // TODO To be completed by the student
 
+        // Our execution flow guarantees that the cache will have the correct output or no output by this point
         return cache.getCachedResults(new DNSNode(mostRecentCname, node.getType()));
+    }
+
+
+    /**
+     * Query is sent in iterative mode, and packet is received.
+     * If there is a socketTimeout exception, then we retry the same query. If there is an exception again, we return null.
+     *
+     * @param node          Host name and record type to be used for the query.
+     * @param queryServer   Address of the server to be used for the query.
+     * @param transactionID transactionID for queryID. Need this parameter to keep transactionID the same
+     * @return dnsResponseParser The DNSResponseParser initialized properly. It should be parsed
+     */
+    private static DNSResponseParser sendAndReceiveQuery(DNSNode node, InetAddress queryServer, int transactionID) throws Exception{
+        DNSResponseParser dnsResponseParser;
+        int timesSocketTimedOut = 0;
+        outerloop:
+        while(true){ // If socket times out, try again, if it happens again, fail
+            try {
+                dnsResponseParser = null;
+                if(timesSocketTimedOut > 1){
+                    break outerloop; // DNSResponse parser will be null
+                }
+                //generate the packet and send
+                DNSQueryGenerator queryGenerator = new DNSQueryGenerator(node, verboseTracing);
+                DatagramPacket query = queryGenerator.createPacket(queryServer, DEFAULT_DNS_PORT, transactionID);
+                socket.send(query);
+
+                //Wait for response
+                DatagramPacket response;
+
+                while (true) { // Keep receiving response until correct packet is received
+                    response = new DatagramPacket(new byte[1024], 1024);
+
+                    socket.receive(response);
+                    dnsResponseParser = new DNSResponseParser(response, node, verboseTracing);
+                    if (dnsResponseParser.checkValidTransactionID(queryGenerator.getGeneratedId())) {
+                        break outerloop; // its a valid response so we know we got the right packet and DNSResponseParser is initialized properly
+                    }
+                }
+            } catch(SocketTimeoutException e) {
+                // Repeat call
+                timesSocketTimedOut++;
+            }
+        }
+
+        return dnsResponseParser;
     }
 
     /**
