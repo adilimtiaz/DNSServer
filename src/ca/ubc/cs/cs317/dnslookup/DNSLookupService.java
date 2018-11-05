@@ -302,6 +302,7 @@ public class DNSLookupService {
             nsIPAddr = nameServerAddresses.get(0).getInetResult();
         } else {
             // Cache does not have address for NS, HENCE make new query to resolve NS
+            rootServer = topLevelRootServer;
             Set<ResourceRecord> IPAddressesFound = getResults(nsNode, indirectionLevel);
             ArrayList<ResourceRecord> IPAddressList = new ArrayList<>();
             IPAddressList.addAll(IPAddressesFound);
