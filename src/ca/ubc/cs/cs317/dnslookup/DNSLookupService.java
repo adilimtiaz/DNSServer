@@ -185,15 +185,17 @@ public class DNSLookupService {
                     DNSResponseParser dnsResponseParser = sendAndReceiveQuery(node, rootServer);
                     if (! (dnsResponseParser == null)) {
                         retreiveResultsFromQuery(node, indirectionLevel, dnsResponseParser);
+                    } else{
+                        throw new SocketTimeoutException("The socket has timed out and has been retried 1x");
                     }
                 }
+            }catch(SocketTimeoutException e) {
+                System.err.println("SocketTimeOutException: " + e.getMessage());
+                return Collections.emptySet();
             } catch (SocketException e) {
                 System.err.println("SocketException: " + e.getMessage());
                 return Collections.emptySet();
-            } catch (IOException e) {
-                System.err.println("IOException: " + e.getMessage());
-                return Collections.emptySet();
-            } catch (Exception e) {
+            }catch(Exception e) {
                 System.err.println(e.getMessage());
                 return Collections.emptySet();
             }
