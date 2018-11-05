@@ -15,6 +15,8 @@ public class DNSLookupService {
     private static InetAddress rootServer;
     private static boolean verboseTracing = false;
     private static DatagramSocket socket;
+    private static InetAddress topLevelRootServer;
+    private static String mostRecentCname;
 
     private static DNSCache cache = DNSCache.getInstance();
 
@@ -36,6 +38,7 @@ public class DNSLookupService {
 
         try {
             rootServer = InetAddress.getByName(args[0]);
+            topLevelRootServer = InetAddress.getByName(args[0]);
             System.out.println("Root DNS server is: " + rootServer.getHostAddress());
         } catch (UnknownHostException e) {
             System.err.println("Invalid root server (" + e.getMessage() + ").");
@@ -83,6 +86,7 @@ public class DNSLookupService {
                 if (commandArgs.length == 2) {
                     try {
                         rootServer = InetAddress.getByName(commandArgs[1]);
+                        topLevelRootServer = InetAddress.getByName(commandArgs[1]);
                         System.out.println("Root DNS server is now: " + rootServer.getHostAddress());
                     } catch (UnknownHostException e) {
                         System.out.println("Invalid root server (" + e.getMessage() + ").");
@@ -125,6 +129,7 @@ public class DNSLookupService {
                     System.err.println("Invalid call. Format:\n\tlookup hostName [type]");
                     continue;
                 }
+                mostRecentCname = commandArgs[1];
                 findAndPrintResults(commandArgs[1], type);
             } else if (commandArgs[0].equalsIgnoreCase("dump")) {
                 // DUMP: Print all results still cached
@@ -177,6 +182,13 @@ public class DNSLookupService {
             if(cache.getCachedResults(node).size() > 0){ // Return from cache first if theres anything in the cache
                 return cache.getCachedResults(node);
             }
+            if(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0) { //Cname for this server already cached
+                ResourceRecord cnameRecord = new ArrayList<>(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME))).get(0);
+                mostRecentCname = cnameRecord.getTextResult();
+                DNSNode newNode = new DNSNode(mostRecentCname, node.getType());
+                rootServer = topLevelRootServer;
+                return getResults(newNode, ++indirectionLevel);
+            }
 
             while(true) { // TODO: Replace with while response is not authoritative
                 //generate the packet and send
@@ -200,6 +212,14 @@ public class DNSLookupService {
                 {
                     break;
                 }
+                else if(dnsResponseParser.getIsAuthoritativeAnswer() &&     //Check if we got some Cnamames
+                        cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0){
+                    ArrayList<ResourceRecord> cnameResults = new ArrayList<>(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)));
+                    mostRecentCname= cnameResults.get(0).getTextResult();
+                    DNSNode newNode = new DNSNode(mostRecentCname, node.getType());
+                    rootServer = topLevelRootServer;
+                    return getResults(newNode, ++indirectionLevel);
+                }
                 else if(dnsResponseParser.getNSCOUNT()> 0){ // No answer but we got name servers
                     // Check if we know the ipaddress in cache for nameservers
                     InetAddress targetIPAddress;
@@ -212,13 +232,11 @@ public class DNSLookupService {
                             targetIPAddress = cacheResults.get(0).getInetResult();
                             InetAddress originalRootServer = rootServer;
                             rootServer = targetIPAddress;
-                            getResults(node, ++indirectionLevel);
+                            getResults(node, indirectionLevel);
                             rootServer = originalRootServer;
                             break; // No need to check the other NS, we know the IP address for one already
                         }
                     }
-
-
                 }
                 break;
             }
@@ -236,7 +254,7 @@ public class DNSLookupService {
         }
         // TODO To be completed by the student
 
-        return cache.getCachedResults(node);
+        return cache.getCachedResults(new DNSNode(mostRecentCname, node.getType()));
     }
 
     /**
