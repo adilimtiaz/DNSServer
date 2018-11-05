@@ -149,7 +149,6 @@ public class DNSResponseParser {
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         } else if (type == RecordType.CNAME){
             String nameServerName = parseDomainName(this.currentDataIndex);
-            nameServerDomainNames.add(nameServerName);
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, nameServerName);
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
