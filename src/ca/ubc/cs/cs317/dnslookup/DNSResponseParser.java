@@ -40,7 +40,6 @@ public class DNSResponseParser {
 
     private void parseHeader() throws Exception {
         this.parsedId =  convertToUnsignedInt(this.data[0], this.data[1]);
-        int isResponse = getNthBitFromLeftForByte(1, this.data[2]);                   //should be 1
         this.isAuthoritativeAnswer = getNthBitFromLeftForByte(6, this.data[2]) > 0;
         int RCODE = 0;
         for(int i=5; i<8;i++){
@@ -153,7 +152,7 @@ public class DNSResponseParser {
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         } else{  //case for finding a record we are not expected to get any data out of
-            this.currentDataIndex += rDataLength; //skip over all the data contents
+            parseDomainName(this.currentDataIndex);
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, "----");
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         }
@@ -251,10 +250,6 @@ public class DNSResponseParser {
 
     public boolean getIsAuthoritativeAnswer(){
         return this.isAuthoritativeAnswer;
-    }
-
-    public int getNSCOUNT(){
-        return this.NSCOUNT;
     }
 
     public ArrayList<String> getResponseNameServerDomainNames(){
