@@ -198,15 +198,20 @@ public class DNSLookupService {
                 return Collections.emptySet();
             }
         }
-        DNSNode mostReleventCname = findLastCNameInChainFromCache(node);
-        if(mostReleventCname == null){          // the node does not have a Cname, return the cache for the original node
-            return cache.getCachedResults(node);
-        } else {                                // the node has a Cname, we need the results for its canonical name, not its originally searched for name
-            return cache.getCachedResults(mostReleventCname);
+        try {
+            DNSNode mostReleventCname = findLastCNameInChainFromCache(node);
+            if(mostReleventCname == null){          // the node does not have a Cname, return the cache for the original node
+                return cache.getCachedResults(node);
+            } else {                                // the node has a Cname, we need the results for its canonical name, not its originally searched for name
+                return cache.getCachedResults(mostReleventCname);
+            }
+        } catch (Exception e){
+            System.err.println(e.getMessage());
+            return Collections.emptySet();
         }
     }
 
-    public static Set<ResourceRecord> checkCacheForNode(DNSNode node, int indirectionLevel) {
+    public static Set<ResourceRecord> checkCacheForNode(DNSNode node, int indirectionLevel) throws Exception{
         Set<ResourceRecord> cacheResults = Collections.emptySet();
         // Return from cache first if theres anything in the cache
         if (cache.getCachedResults(node).size() > 0) {
@@ -222,7 +227,7 @@ public class DNSLookupService {
         return cacheResults;
     }
 
-    public static void retreiveResultsFromQuery(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser){
+    public static void retreiveResultsFromQuery(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser)throws Exception{
         Set<ResourceRecord> results = Collections.emptySet();
         if (dnsResponseParser.getIsAuthoritativeAnswer()) {
             // Answer is authoritative
@@ -234,7 +239,7 @@ public class DNSLookupService {
     }
 
     //TODO This is still retuning a Set<ResourceRecord> just to maintain that we find some sort of answer in this function and to NOT check nameservers
-    public static Set<ResourceRecord> retreiveResultsFromAuthoritativeAnswer(DNSNode node, int indirectionLevel){
+    public static Set<ResourceRecord> retreiveResultsFromAuthoritativeAnswer(DNSNode node, int indirectionLevel) throws Exception{
         Set<ResourceRecord> results = Collections.emptySet();
         Set<ResourceRecord> answersSet = cache.getCachedResults(node);
         ArrayList<ResourceRecord> answers = new ArrayList<>();
@@ -269,7 +274,6 @@ public class DNSLookupService {
                 results = cache.getCachedResults(nextNodeToQuery);
             }
         }
-
         return results;
     }
 
@@ -369,11 +373,13 @@ public class DNSLookupService {
      * @param node Host name and record type to be used for the original query that is trying to resolve CNames.
      * @return DNSNode Last CNAME node such that a node with it's Address and Node's type does not exist in cache | null
      */
-    private static DNSNode findLastCNameInChainFromCache(DNSNode node) {
+    private static DNSNode findLastCNameInChainFromCache(DNSNode node) throws Exception{
         //TODO needs to iterate over all cnames in cache if they exist, not first first one
         DNSNode cNameNode = null;
         DNSNode currentNode = node;
+        int indirectionLevel = 1;
         while (true) {
+            if(indirectionLevel > 10) throw new Exception("Max Indirection Level Reached");
             Set<ResourceRecord> cachedCname = cache.getCachedResults(new DNSNode(currentNode.getHostName(), RecordType.CNAME));
             ArrayList<ResourceRecord> cachedCnames = new ArrayList<>(cachedCname);
             if (!(cachedCnames.size() > 0)) { // No CName Records found for currentNode hence last node in CNAME chain
@@ -384,6 +390,7 @@ public class DNSLookupService {
 
             updateHashMap(currentNode.getHostName(), cNameNode.getHostName()); // Let HostNameToCNameMap know that this hostName has this CName
             currentNode = new DNSNode(cNameNode.getHostName(), RecordType.CNAME); // Update to continute iterating
+            indirectionLevel++;
         }
 
         return cNameNode;

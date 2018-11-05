@@ -4,11 +4,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static java.lang.Math.abs;
 
 public class DNSResponseParser {
     private static DNSCache cache = DNSCache.getInstance();
