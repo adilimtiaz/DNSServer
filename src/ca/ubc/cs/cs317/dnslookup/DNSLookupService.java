@@ -16,7 +16,7 @@ public class DNSLookupService {
     private static boolean verboseTracing = false;
     private static DatagramSocket socket;
     private static InetAddress topLevelRootServer;
-    private static String mostRecentCname;
+    private static Map<String, ArrayList<String>> HostNameToCNameMap; // Key will be host name for a node, Value will be a list of CNames that points to Key
 
     private static DNSCache cache = DNSCache.getInstance();
 
@@ -28,7 +28,7 @@ public class DNSLookupService {
      * @param args list of arguments specified in the command line.
      */
     public static void main(String[] args) {
-
+        HostNameToCNameMap = new HashMap<>();
         if (args.length != 1) {
             System.err.println("Invalid call. Usage:");
             System.err.println("\tjava -jar DNSLookupService.jar rootServer");
@@ -129,7 +129,6 @@ public class DNSLookupService {
                     System.err.println("Invalid call. Format:\n\tlookup hostName [type]");
                     continue;
                 }
-                mostRecentCname = commandArgs[1];
                 findAndPrintResults(commandArgs[1], type);
             } else if (commandArgs[0].equalsIgnoreCase("dump")) {
                 // DUMP: Print all results still cached
@@ -173,17 +172,6 @@ public class DNSLookupService {
      * @return A set of resource records corresponding to the specific query requested.
      */
     private static Set<ResourceRecord> getResults(DNSNode node, int indirectionLevel) {
-        /**
-         // Check if CName for this server already cached
-         if (cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME)).size() > 0) {
-         ResourceRecord cnameRecord = new ArrayList<>(cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME))).get(0);
-         mostRecentCname = cnameRecord.getTextResult();
-         DNSNode newNode = new DNSNode(mostRecentCname, node.getType());
-         rootServer = topLevelRootServer;
-         return getResults(newNode, ++indirectionLevel);
-         }
-         **/
-
         try {
             if (indirectionLevel > MAX_INDIRECTION_LEVEL) {
                 System.err.println("Maximum number of indirection levels reached.");
@@ -193,6 +181,14 @@ public class DNSLookupService {
             // Return from cache first if theres anything in the cache
             if (cache.getCachedResults(node).size() > 0) {
                 return cache.getCachedResults(node);
+            }
+
+            // Check cache for CNAME of node
+            DNSNode lastCNameNodeForQueriedNode = findLastCNameInChainFromCache(node);                                   //checks cache to see if CNAME is stored
+            if (lastCNameNodeForQueriedNode != null) {
+                rootServer = topLevelRootServer;                                        //resets rootserver to the original starting server
+                getResults(lastCNameNodeForQueriedNode, ++indirectionLevel);                      //starts search again at rootlevelServer with new Cname
+                return cache.getCachedResults(lastCNameNodeForQueriedNode);
             }
 
             // send and receive query
@@ -219,13 +215,26 @@ public class DNSLookupService {
                     }
                 }
 
-                if (correctAnswerTypeFound) {
+                if(correctAnswerTypeFound) {
                     return cache.getCachedResults(node);
                 }
 
-                if (CNAMEsfound) {
-                    // Do a query to resolve CNAME
-                    return Collections.emptySet();
+                else {
+                    Set<ResourceRecord> cNameAnswers = cache.getCachedResults(new DNSNode(node.getHostName(), RecordType.CNAME));
+                    for (ResourceRecord answer : cNameAnswers) {
+                        if (answer.getType() == RecordType.CNAME) {
+                            System.out.println("Found CNAME : " + answer.toString());
+                            CNAMEsfound = true;
+                        }
+                    }
+
+                    if (CNAMEsfound) {
+                        // Do a query to resolve CNAME
+                        DNSNode newNode = findLastCNameInChainFromCache(node);                       //Get the CName from the cache
+                        rootServer = topLevelRootServer;                             //Reset rootserver to original query parameter
+                        getResults(newNode, ++indirectionLevel);             //restart search with new Cname at original nameserver
+                        return cache.getCachedResults(newNode);
+                    }
                 }
             } else { // No auth answer returned by query but we got name servers
                 ArrayList<String> nsNamesFromThisResponse = dnsResponseParser.getResponseNameServerDomainNames();
@@ -346,6 +355,41 @@ public class DNSLookupService {
         }
 
         return dnsResponseParser;
+    }
+
+    /**
+     * Finds the last CName node in a chain of CNames from the cache, returns null if no CName node found
+     *
+     * @param node Host name and record type to be used for the query.
+     * @return DNSNode Last CNAME node such that it's RDATA is not a CNAME that is already in the cache | null
+     */
+    private static DNSNode findLastCNameInChainFromCache(DNSNode node) {
+        //TODO needs to iterate over all cnames in cache if they exist, not first first one
+        DNSNode pointerNode = null;
+        DNSNode currentNode = node;
+        while (true) {
+            Set<ResourceRecord> cachedCname = cache.getCachedResults(new DNSNode(currentNode.getHostName(), RecordType.CNAME));
+            ArrayList<ResourceRecord> cachedCnames = new ArrayList<>(cachedCname);
+            if(! (cachedCnames.size() > 0)) { // No CName Records found for currentNode hence last node in CNAME chain
+                break;
+            }
+            pointerNode = new DNSNode(cachedCnames.get(0).getTextResult(), RecordType.A); // currentNode was a CNameNode that pointed to pointerNode
+
+            updateHashMap(pointerNode.getHostName(), currentNode.getHostName()); // Let HostNameToCNameMap know that this node is pointed to by all these CNames
+            currentNode = new DNSNode(pointerNode.getHostName(), RecordType.CNAME); // Update to continute iterating
+        }
+
+        return pointerNode;
+    }
+
+    private static void updateHashMap(String hostName, String cNameToInsert){
+        if(!HostNameToCNameMap.containsKey(hostName)){
+            // initialize list for hostName
+            HostNameToCNameMap.put(hostName, new ArrayList<String>());
+        }
+        if (cNameToInsert.equals(null) || cNameToInsert.length() == 0) {
+            HostNameToCNameMap.get(hostName).add(cNameToInsert);
+        }
     }
 
     /**

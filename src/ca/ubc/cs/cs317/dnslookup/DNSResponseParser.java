@@ -148,17 +148,15 @@ public class DNSResponseParser {
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         } else if (type == RecordType.CNAME){
-            String nameServerName = parseDomainName(this.currentDataIndex);
-            ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, nameServerName);
+            String CName = parseDomainName(this.currentDataIndex);
+            ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, CName);
             cache.addResult(resourceRecord);
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         } else{  //case for finding a record we are not expected to get any data out of
-            //TODO should test a case where we need to parse normal records plus an unexpected to ensure that this offset is correct
             this.currentDataIndex += rDataLength; //skip over all the data contents
             ResourceRecord resourceRecord = new ResourceRecord(name, type, ttl, "----");
             verbosePrintResourceRecord(resourceRecord, type.getCode());
         }
-
     }
 
     private InetAddress parseIPV4address() throws UnknownHostException{
