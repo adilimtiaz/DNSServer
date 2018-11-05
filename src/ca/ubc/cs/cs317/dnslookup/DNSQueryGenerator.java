@@ -2,9 +2,8 @@ package ca.ubc.cs.cs317.dnslookup;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.Random;
-
-import static java.lang.Math.abs;
 
 public class DNSQueryGenerator {
     private static Random random = new Random();
@@ -32,7 +31,8 @@ public class DNSQueryGenerator {
             +  "  " + this.node.getType()
             + " --> " + rootServer.getHostAddress());
         }
-        return new DatagramPacket(this.buffer, this.bufferLength, rootServer, port);
+        byte[] bufferExactSize = Arrays.copyOfRange(this.buffer,0, this.bufferLength);
+        return new DatagramPacket(bufferExactSize, this.bufferLength, rootServer, port);
     }
 
 

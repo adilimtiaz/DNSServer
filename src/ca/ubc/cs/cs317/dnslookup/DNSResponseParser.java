@@ -41,10 +41,12 @@ public class DNSResponseParser {
     private void parseHeader() throws Exception {
         this.parsedId =  convertToUnsignedInt(this.data[0], this.data[1]);
         this.isAuthoritativeAnswer = getNthBitFromLeftForByte(6, this.data[2]) > 0;
+        failIfTruncated(getNthBitFromLeftForByte(7, this.data[2]));
         int RCODE = 0;
         for(int i=5; i<8;i++){
             RCODE = ((RCODE << 1) | getNthBitFromLeftForByte(i, this.data[3]));
         }
+        processRcode(RCODE);
         this.QDCOUNT = convertToUnsignedInt(this.data[4], this.data[5]);
         this.ANCOUNT = convertToUnsignedInt(this.data[6], this.data[7]);
         this.NSCOUNT = convertToUnsignedInt(this.data[8], this.data[9]);
@@ -105,22 +107,6 @@ public class DNSResponseParser {
         this.currentDataIndex += 4;
         int rDataLength = convertToUnsignedInt(this.data[this.currentDataIndex], this.data[this.currentDataIndex + 1]);
         this.currentDataIndex += 2;
-        /**
-        if(type == RecordType.NS) {
-//            String rData = parseDomainName();
-//          ResourceRecord resourceRecord = new ResourceRecord(dnsNode.getHostName(), dnsNode.getType(), ttl, rData);
-//          cache.addResult(resourceRecord);
-        } else  else if(type == RecordType.AAAA){
-            try {
-                InetAddress addr = parseIPV6address();
-                ResourceRecord resourceRecord = new ResourceRecord(this.dnsNode.getHostName(), type, ttl, addr);
-                cache.addResult(resourceRecord);
-            } catch (UnknownHostException e){
-                System.err.println("Problem parsing IPV6address: " + e.getMessage());
-            }
-        }
-        //TODO add case parsing of answer CNAME and NS
-         **/
         if(type == RecordType.A) {
             try {
                 InetAddress addr = parseIPV4address();
@@ -169,7 +155,6 @@ public class DNSResponseParser {
     }
 
     private InetAddress parseIPV6address() throws UnknownHostException{
-        //TODO this method does not work, need a new way to parse IPV6
         byte[] ipv6Bytes = new byte[16];
         for(int i = 0; i < 16; i++){
             ipv6Bytes[i] = (byte)(this.data[this.currentDataIndex] & 0xFF);
@@ -222,6 +207,33 @@ public class DNSResponseParser {
 
         this.currentDataIndex = dataOffset+1;
         return domainName;
+    }
+
+    private void processRcode(int rCode) throws Exception {
+        switch(rCode){
+            case(0):
+                break;
+            case(1):
+                throw new Exception("Format error - The name server was unable to interpret the query.");
+            case(2):
+                throw new Exception("Server failure - The name server was unable to " +
+                        "process this query due to a problem with the name server.");
+            case(3):
+                throw new Exception("Name Error - The domain name referenced in the query does not exist");
+            case(4):
+                throw new Exception(" Not Implemented - The name server does\n" +
+                        "                                not support the requested kind of query");
+            case(5):
+                throw new Exception("Refused - The name server refuses to\n" +
+                        "                                perform the specified operation for\n" +
+                        "                                policy reasons.");
+        }
+    }
+
+    private void failIfTruncated(int truncatedBit) throws Exception{
+        if(truncatedBit == 1) {
+            throw new Exception("Failed because response was too large");
+        }
     }
 
     private static int convertToUnsignedInt(byte byte1) {
