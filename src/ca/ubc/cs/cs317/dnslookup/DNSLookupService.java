@@ -172,34 +172,38 @@ public class DNSLookupService {
      * @return A set of resource records corresponding to the specific query requested.
      */
     private static Set<ResourceRecord> getResults(DNSNode node, int indirectionLevel) {
-        Set<ResourceRecord> results = Collections.emptySet();
         if (indirectionLevel > MAX_INDIRECTION_LEVEL) {
             System.err.println("Maximum number of indirection levels reached.");
-            results = Collections.emptySet();
+            return Collections.emptySet();
         } else {
             try {
                 Set<ResourceRecord> cacheResults = checkCacheForNode(node, indirectionLevel);
                 if (cacheResults.size() > 0) {
-                    results = cacheResults;
+                    //do nothing, the answer is in the cache and will be returned at the end!
                 } else {
                     // send and receive query
                     DNSResponseParser dnsResponseParser = sendAndReceiveQuery(node, rootServer);
                     if (! (dnsResponseParser == null)) {
-                        results = retreiveResultsFromQuery(node, indirectionLevel, dnsResponseParser);
+                        retreiveResultsFromQuery(node, indirectionLevel, dnsResponseParser);
                     }
                 }
             } catch (SocketException e) {
                 System.err.println("SocketException: " + e.getMessage());
-                results = Collections.emptySet();
+                return Collections.emptySet();
             } catch (IOException e) {
                 System.err.println("IOException: " + e.getMessage());
-                results = Collections.emptySet();
+                return Collections.emptySet();
             } catch (Exception e) {
                 System.err.println(e.getMessage());
-                results = Collections.emptySet();
+                return Collections.emptySet();
             }
         }
-        return results;
+        DNSNode mostReleventCname = findLastCNameInChainFromCache(node);
+        if(mostReleventCname == null){          // the node does not have a Cname, return the cache for the original node
+            return cache.getCachedResults(node);
+        } else {                                // the node has a Cname, we need the results for its canonical name, not its originally searched for name
+            return cache.getCachedResults(mostReleventCname);
+        }
     }
 
     public static Set<ResourceRecord> checkCacheForNode(DNSNode node, int indirectionLevel) {
@@ -210,26 +214,26 @@ public class DNSLookupService {
         }
         // Check cache to see if a CNAME points to hostName of node
         else if (HostNameToCNameMap.containsKey(node.getHostName())) { // If some CNameNode points to Host
-            String cNameThatPointsToNode = HostNameToCNameMap.get(node.getHostName()).get(0);
-            DNSNode cNameNode = new DNSNode(cNameThatPointsToNode, node.getType());
-            DNSNode lastCNameNode = findLastCNameInChainFromCache(new DNSNode(cNameThatPointsToNode, node.getType()));
-            cacheResults = getResults(lastCNameNode, indirectionLevel);
+//            String cNameThatPointsToNode = HostNameToCNameMap.get(node.getHostName()).get(0);
+//            DNSNode cNameNode = new DNSNode(cNameThatPointsToNode, node.getType());
+            DNSNode lastCNameNode = findLastCNameInChainFromCache(node);
+            cacheResults = getResults(lastCNameNode, ++indirectionLevel);
         }
         return cacheResults;
     }
 
-    public static Set<ResourceRecord> retreiveResultsFromQuery(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser){
+    public static void retreiveResultsFromQuery(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser){
         Set<ResourceRecord> results = Collections.emptySet();
         if (dnsResponseParser.getIsAuthoritativeAnswer()) {
             // Answer is authoritative
             results = retreiveResultsFromAuthoritativeAnswer(node, indirectionLevel);
         }
         if(! (results.size() > 0)){
-            results = retreiveResultsFromNameServers(node, indirectionLevel, dnsResponseParser);
+            retreiveResultsFromNameServers(node, indirectionLevel, dnsResponseParser);
         }
-        return results;
     }
 
+    //TODO This is still retuning a Set<ResourceRecord> just to maintain that we find some sort of answer in this function and to NOT check nameservers
     public static Set<ResourceRecord> retreiveResultsFromAuthoritativeAnswer(DNSNode node, int indirectionLevel){
         Set<ResourceRecord> results = Collections.emptySet();
         Set<ResourceRecord> answersSet = cache.getCachedResults(node);
@@ -269,8 +273,7 @@ public class DNSLookupService {
         return results;
     }
 
-    public static Set<ResourceRecord> retreiveResultsFromNameServers(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser) {
-        Set<ResourceRecord> results = Collections.emptySet();
+    private static void retreiveResultsFromNameServers(DNSNode node, int indirectionLevel, DNSResponseParser dnsResponseParser) {
         ArrayList<String> nsNamesFromThisResponse = dnsResponseParser.getResponseNameServerDomainNames();
 
         // Try to see if at least one NS has an IP Address that can be resolved
@@ -283,12 +286,9 @@ public class DNSLookupService {
                 rootServer = NSIPAddress;
                 getResults(node, indirectionLevel);
                 rootServer = tmpRootServer; //Restore orignial rootServer
-                results = cache.getCachedResults(node);
                 break;
             }
         }
-
-        return results;
     }
 
     public static InetAddress resolveNSInetAddr(String nsDomainName, int indirectionLevel) {
