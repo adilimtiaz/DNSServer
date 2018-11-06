@@ -417,8 +417,10 @@ public class DNSLookupService {
      * @param server Address of the server to be used for the query.
      */
     private static void retrieveResultsFromServer(DNSNode node, InetAddress server) {
-
-        // TODO To be completed by the student
+        InetAddress temp = rootServer;
+        rootServer = server;
+        getResults(node, 0);
+        rootServer = temp;
     }
 
     private static void verbosePrintResourceRecord(ResourceRecord record, int rtype) {
